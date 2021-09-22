@@ -1,318 +1,337 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>three.js ar - hit test</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-		<link type="text/css" rel="stylesheet" href="main.css">
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-	</head>
-	<body>
 
-		<div id="content">
-			<div id="mySidenav" class="sidenav">
-				<a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-				<a class="ar-object" id="1" href="#">item_1</a>
-				<a class="ar-object" id="2" href="#">item_2</a>
-				<a class="ar-object" id="3" href="#">item_3</a>
-				<a class="ar-object" id="4" href="#">item_4</a>
-			</div>
-	
-			<div id="container" style="position: fixed;"></div>
-			  
-			<span style="font-size:30px;cursor:pointer;position: absolute;" onclick="openNav()">&#9776; open</span>
-		
-			<button type="button" id="place-button">PLACE</button>
+<head>
+	<title>three.js ar - hit test</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+	<link type="text/css" rel="stylesheet" href="main.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+
+<body>
+
+	<div id="content">
+		<div id="mySidenav" class="sidenav">
+			<a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+			<a class="ar-object" id="1" href="#">item_1</a>
+			<a class="ar-object" id="2" href="#">item_2</a>
+			<a class="ar-object" id="3" href="#">item_3</a>
+			<a class="ar-object" id="4" href="#">item_4</a>
 		</div>
 
-		<script>
-			function openNav() {
-			  document.getElementById("mySidenav").style.width = "250px";
-			}
-			
-			function closeNav() {
-			  document.getElementById("mySidenav").style.width = "0";
-			}
-		</script>
+		<div id="container" style="position: fixed;"></div>
 
-		<script type="module">
+		<span style="font-size:30px;cursor:pointer;position: absolute;" onclick="openNav()">&#9776; open</span>
 
-			import * as THREE from './build/three.module.js';
-			import { ARButton } from './jsm/webxr/ARButton.js';
-			import { VRButton } from './jsm/webxr/VRButton.js';
-			//
-			import { OrbitControls } from './jsm/controls/OrbitControls.js';
-			import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
-			import { RGBELoader } from './jsm/loaders/RGBELoader.js';
-			import { RoughnessMipmapper } from './jsm/utils/RoughnessMipmapper.js';
+		<button type="button" id="place-button">PLACE</button>
+		<button id="reload" onClick="window.location.reload();">Refresh Page</button>
+	</div>
 
-			var container;
-			var camera, scene, renderer;
-			var controller;
+	<script>
+		function openNav() {
+			document.getElementById("mySidenav").style.width = "250px";
+		}
 
-			var reticle, pmremGenerator, current_object, controls, isAR, envmap;
+		function closeNav() {
+			document.getElementById("mySidenav").style.width = "0";
+		}
 
-			var hitTestSource = null;
-			var hitTestSourceRequested = false;
+		const reloadtButton = document.querySelector("#reload");
+		// Reload everything:
+		function reload() {
+			reload = location.reload();
+		}
+		// Event listeners for reload
+		reloadButton.addEventListener("click", reload, false);
+	</script>
 
-			init();
-			animate();
+	<script type="module">
 
-			$(".ar-object").click(function(){
-				if(current_object != null){
-					scene.remove(current_object);
-				}
+		import * as THREE from './build/three.module.js';
+		import { ARButton } from './jsm/webxr/ARButton.js';
+		import { VRButton } from './jsm/webxr/VRButton.js';
+		//
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
+		import { RGBELoader } from './jsm/loaders/RGBELoader.js';
+		import { RoughnessMipmapper } from './jsm/utils/RoughnessMipmapper.js';
 
-				loadModel($(this).attr("id"));
-			});
+		var container;
+		var camera, scene, renderer;
+		var controller;
 
-			$("#ARButton").click(function(){
-				current_object.visible = false;
-				isAR = true;
-			});
+		var reticle, pmremGenerator, current_object, controls, isAR, envmap;
 
-			$("#VRButton").click(function(){
-				scene.background = envmap;
-				scene.position.z = -2;
-			});
+		var hitTestSource = null;
+		var hitTestSourceRequested = false;
 
-			$("#place-button").click(function(){
-				arPlace();
-			});
 
-			function arPlace(){
-				if ( reticle.visible ) {
-					current_object.position.setFromMatrixPosition(reticle.matrix);
-					current_object.visible = true;
-				}
+
+
+		init();
+		animate();
+
+		$(".ar-object").click(function () {
+			if (current_object != null) {
+				scene.remove(current_object);
 			}
 
-			function loadModel(model){
-				
-				new RGBELoader()
-					.setDataType(THREE.UnsignedByteType)
-					.setPath('textures/')
-					.load('photo_studio_01_1k.hdr', function(texture){
+			loadModel($(this).attr("id"));
+		});
 
-						envmap = pmremGenerator.fromEquirectangular(texture).texture;
+		$("#ARButton").click(function () {
+			current_object.visible = false;
+			isAR = true;
+		});
 
-						scene.environment = envmap;
-						texture.dispose();
-						pmremGenerator.dispose();
+		$("#VRButton").click(function () {
+			scene.background = envmap;
+			scene.position.z = -2;
+		});
+
+		$("#place-button").click(function () {
+			arPlace();
+		});
+
+		function arPlace() {
+			if (reticle.visible) {
+				current_object.position.setFromMatrixPosition(reticle.matrix);
+				current_object.visible = true;
+			}
+		}
+
+		function loadModel(model) {
+
+			new RGBELoader()
+				.setDataType(THREE.UnsignedByteType)
+				.setPath('textures/')
+				.load('photo_studio_01_1k.hdr', function (texture) {
+
+					envmap = pmremGenerator.fromEquirectangular(texture).texture;
+
+					scene.environment = envmap;
+					texture.dispose();
+					pmremGenerator.dispose();
+					render();
+
+					var loader = new GLTFLoader().setPath('3d/');
+					loader.load(model + ".glb", function (glb) {
+
+						current_object = glb.scene;
+						scene.add(current_object);
+
+						arPlace();
+
+						var box = new THREE.Box3();
+						box.setFromObject(current_object);
+						box.center(controls.target);
+
+						controls.update();
 						render();
-
-						var loader = new GLTFLoader().setPath('3d/');
-						loader.load(model + ".glb", function(glb) {
-
-							current_object = glb.scene;
-							scene.add(current_object);
-
-							arPlace();
-
-							var box = new THREE.Box3();
-							box.setFromObject(current_object);
-							box.center(controls.target);
-
-							controls.update();
-							render();
-						});
 					});
-			}
+				});
+		}
 
-			function init() {
+		function init() {
 
-				container = document.createElement( 'div' );
-				document.getElementById("container").appendChild( container );
+			container = document.createElement('div');
+			document.getElementById("container").appendChild(container);
 
-				scene = new THREE.Scene();
-				window.scene = scene;
+			scene = new THREE.Scene();
+			window.scene = scene;
 
-				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.001, 200 );
+			camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.001, 200);
 
-				var directionalLight = new THREE.DirectionalLight(0xdddddd, 1);
-				directionalLight.position.set(0, 0, 1).normalize();
-				scene.add(directionalLight);
+			var directionalLight = new THREE.DirectionalLight(0xdddddd, 1);
+			directionalLight.position.set(0, 0, 1).normalize();
+			scene.add(directionalLight);
 
-				var ambientLight = new THREE.AmbientLight(0x222222);
-				scene.add(ambientLight);
-
-				//
-
-				renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.xr.enabled = true;
-				container.appendChild( renderer.domElement );
-
-				pmremGenerator = new THREE.PMREMGenerator(renderer);
-				pmremGenerator.compileEquirectangularShader();
-
-				controls = new OrbitControls(camera, renderer.domElement);
-				controls.addEventListener('change', render);
-				controls.minDistance = 2;
-				controls.maxDistance = 10;
-				controls.target.set(0, 0, -0.2);
-				controls.enableDamping = true;
-				controls.dampingFactor = 0.05;
-
-				//VR SETUP
-				document.body.appendChild(VRButton.createButton(renderer));
-
-				//AR SETUP
-
-				let options = {
-					requiredFeatures: ['hit-test'],
-					optionalFeatures: ['dom-overlay'],
-				}
-
-				options.domOverlay = { root: document.getElementById('content')};
-
-				document.body.appendChild( ARButton.createButton(renderer, options));
-
-				//document.body.appendChild( ARButton.createButton( renderer, { requiredFeatures: [ 'hit-test' ] } ) );
-
-				//
-
-				reticle = new THREE.Mesh(
-					new THREE.RingBufferGeometry( 0.15, 0.2, 32 ).rotateX( - Math.PI / 2 ),
-					new THREE.MeshBasicMaterial()
-				);
-				reticle.matrixAutoUpdate = false;
-				reticle.visible = false;
-				scene.add( reticle );
-
-				//
-
-				window.addEventListener( 'resize', onWindowResize, false );
-
-				renderer.domElement.addEventListener('touchstart', function(e){
-					e.preventDefault();
-					touchDown=true;
-					touchX = e.touches[0].pageX;
-					touchY = e.touches[0].pageY;
-				}, false);
-
-				renderer.domElement.addEventListener('touchend', function(e){
-					e.preventDefault();
-					touchDown = false;
-				}, false);
-
-				renderer.domElement.addEventListener('touchmove', function(e){
-					e.preventDefault();
-					
-					if(!touchDown){
-						return;
-					}
-
-					deltaX = e.touches[0].pageX - touchX;
-					deltaY = e.touches[0].pageY - touchY;
-					touchX = e.touches[0].pageX;
-					touchY = e.touches[0].pageY;
-
-					rotateObject();
-
-				}, false);
-
-			}
-
-			var touchDown, touchX, touchY, deltaX, deltaY;
-
-			function rotateObject(){
-				if(current_object && reticle.visible){
-					current_object.rotation.y += deltaX / 100;
-					current_object.rotation.x += deltaY / 100;
-
-				}
-			}
-
-			function onWindowResize() {
-
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-			}
+			var ambientLight = new THREE.AmbientLight(0x222222);
+			scene.add(ambientLight);
 
 			//
 
-			function animate() {
+			renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			renderer.xr.enabled = true;
+			container.appendChild(renderer.domElement);
 
-				renderer.setAnimationLoop( render );
-				requestAnimationFrame(animate);
-				controls.update();
+			pmremGenerator = new THREE.PMREMGenerator(renderer);
+			pmremGenerator.compileEquirectangularShader();
 
+			controls = new OrbitControls(camera, renderer.domElement);
+			controls.addEventListener('change', render);
+			controls.minDistance = 2;
+			controls.maxDistance = 10;
+			controls.target.set(0, 0, -0.2);
+			controls.enableDamping = true;
+			controls.dampingFactor = 0.05;
+
+			//VR SETUP
+			document.body.appendChild(VRButton.createButton(renderer));
+
+			//AR SETUP
+
+			let options = {
+				requiredFeatures: ['hit-test'],
+				optionalFeatures: ['dom-overlay'],
 			}
 
-			function render( timestamp, frame ) {
+			options.domOverlay = { root: document.getElementById('content') };
 
-				if ( frame && isAR) {
+			document.body.appendChild(ARButton.createButton(renderer, options));
 
-					var referenceSpace = renderer.xr.getReferenceSpace();
-					var session = renderer.xr.getSession();
+			//document.body.appendChild( ARButton.createButton( renderer, { requiredFeatures: [ 'hit-test' ] } ) );
 
-					if ( hitTestSourceRequested === false ) {
+			//
 
-						session.requestReferenceSpace( 'viewer' ).then( function ( referenceSpace ) {
+			reticle = new THREE.Mesh(
+				new THREE.RingBufferGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
+				new THREE.MeshBasicMaterial()
+			);
+			reticle.matrixAutoUpdate = false;
+			reticle.visible = false;
+			scene.add(reticle);
 
-							session.requestHitTestSource( { space: referenceSpace } ).then( function ( source ) {
+			//
 
-								hitTestSource = source;
+			window.addEventListener('resize', onWindowResize, false);
 
-							} );
+			renderer.domElement.addEventListener('touchstart', function (e) {
+				e.preventDefault();
+				touchDown = true;
+				touchX = e.touches[0].pageX;
+				touchY = e.touches[0].pageY;
+			}, false);
 
-						} );
+			renderer.domElement.addEventListener('touchend', function (e) {
+				e.preventDefault();
+				touchDown = false;
+			}, false);
 
-						session.addEventListener( 'end', function () {
+			renderer.domElement.addEventListener('touchmove', function (e) {
+				e.preventDefault();
 
-							hitTestSourceRequested = false;
-							hitTestSource = null;
+				if (!touchDown) {
+					return;
+				}
 
-							isAR = false;
+				deltaX = e.touches[0].pageX - touchX;
+				deltaY = e.touches[0].pageY - touchY;
+				touchX = e.touches[0].pageX;
+				touchY = e.touches[0].pageY;
 
-							reticle.visible = false;
+				rotateObject();
 
-							var box = new THREE.Box3();
-							box.setFromObject(current_object);
-							box.center(controls.target);
+			}, false);
 
-							document.getElementById("place-button").style.display = "none";
+		}
 
-						} );
+		var touchDown, touchX, touchY, deltaX, deltaY;
 
-						hitTestSourceRequested = true;
+		function rotateObject() {
+			if (current_object && reticle.visible) {
+				current_object.rotation.y += deltaX / 100;
+				current_object.rotation.x += deltaY / 100;
 
-					}
+			}
+		}
 
-					if ( hitTestSource ) {
+		function onWindowResize() {
 
-						var hitTestResults = frame.getHitTestResults( hitTestSource );
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
 
-						if ( hitTestResults.length ) {
+			renderer.setSize(window.innerWidth, window.innerHeight);
 
-							var hit = hitTestResults[ 0 ];
+		}
 
-							document.getElementById("place-button").style.display = "block";
+		//
 
-							reticle.visible = true;
-							reticle.matrix.fromArray( hit.getPose( referenceSpace ).transform.matrix );
+		function animate() {
 
-						} else {
+			renderer.setAnimationLoop(render);
+			requestAnimationFrame(animate);
+			controls.update();
 
-							reticle.visible = false;
+		}
 
-							document.getElementById("place-button").style.display = "none";
+		function render(timestamp, frame) {
 
-						}
+			if (frame && isAR) {
+
+				var referenceSpace = renderer.xr.getReferenceSpace();
+				var session = renderer.xr.getSession();
+
+				if (hitTestSourceRequested === false) {
+
+					session.requestReferenceSpace('viewer').then(function (referenceSpace) {
+
+						session.requestHitTestSource({ space: referenceSpace }).then(function (source) {
+
+							hitTestSource = source;
+
+						});
+
+					});
+
+					session.addEventListener('end', function () {
+
+						hitTestSourceRequested = false;
+						hitTestSource = null;
+
+						isAR = false;
+
+						reticle.visible = false;
+
+						var box = new THREE.Box3();
+						box.setFromObject(current_object);
+						box.center(controls.target);
+
+						document.getElementById("place-button").style.display = "none";
+						document.getElementById("reload").style.display = "none";
+
+					});
+
+					hitTestSourceRequested = true;
+
+				}
+
+				if (hitTestSource) {
+
+					var hitTestResults = frame.getHitTestResults(hitTestSource);
+
+					if (hitTestResults.length) {
+
+						var hit = hitTestResults[0];
+
+						document.getElementById("place-button").style.display = "block";
+						document.getElementById("reload").style.display = "block";
+
+						reticle.visible = true;
+						reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+
+					} else {
+
+						reticle.visible = false;
+
+						document.getElementById("place-button").style.display = "none";
+						document.getElementById("reload").style.display = "none";
+
 
 					}
 
 				}
 
-				renderer.render( scene, camera );
-
 			}
 
-		</script>
-	</body>
+			renderer.render(scene, camera);
+
+		}
+
+	</script>
+</body>
+
 </html>
