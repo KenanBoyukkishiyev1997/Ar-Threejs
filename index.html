@@ -71,7 +71,7 @@
 		init();
 		animate();
 
-		$(".ar-object").on("click",function () {
+		$(".ar-object").click(function () {
 			if (current_object != null) {
 				scene.remove(current_object);
 			}
@@ -142,7 +142,12 @@
 
 			camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.001, 200);
 
-		
+			var directionalLight = new THREE.DirectionalLight(0xdddddd, 1);
+			directionalLight.position.set(0, 0, 1).normalize();
+			scene.add(directionalLight);
+
+			var ambientLight = new THREE.AmbientLight(0x222222);
+			scene.add(ambientLight);
 
 			//
 
