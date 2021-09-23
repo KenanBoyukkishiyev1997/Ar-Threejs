@@ -25,7 +25,7 @@
 		</div>
 
 		<span style="font-size:30px;cursor:pointer;position: absolute;" onclick="openNav()">&#9776; open</span>
-		<h1 style="text-align: center;">Click open and select chear </h1>
+		<h3 style="text-align: center;">Click open and select chear </h3>
 
 		<button type="button" id="place-button">PLACE</button>
 
@@ -71,12 +71,13 @@
 		init();
 		animate();
 
-		$(".ar-object").click(function () {
+		$(".ar-object").on('click',function () {
 			if (current_object != null) {
 				scene.remove(current_object);
 			}
 
 			loadModel($(this).attr("id"));
+
 		});
 
 		$("#ARButton").click(function () {
